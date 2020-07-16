@@ -26,6 +26,8 @@ newer version yet.
 """)
 #endif
 
+import Runtime
+
 #if swift(>=5.1)
 private protocol _ObservableObjectProperty {
     var objectWillChange: ObservableObjectPublisher? { get set }
@@ -102,16 +104,16 @@ extension ObservableObject where ObjectWillChangePublisher == ObservableObjectPu
 #if swift(>=5.1)
         var installedPublisher: ObservableObjectPublisher?
 
-        enumerateFields(ofType: Self.self,
-                        allowResilientSuperclasses: false) { _, fieldOffset, fieldType in
+        let info = try! typeInfo(of: Self.self)
+        for property in info.properties {
             let storage = Unmanaged
                 .passUnretained(self)
                 .toOpaque()
-                .advanced(by: fieldOffset)
+                .advanced(by: property.offset)
 
-            guard let fieldType = fieldType as? _ObservableObjectProperty.Type else {
+            guard let fieldType = property.type as? _ObservableObjectProperty.Type else {
                 // Visit other fields until we meet a @Published field
-                return true
+                continue
             }
 
             // Now we know that the field is @Published.
@@ -120,7 +122,7 @@ extension ObservableObject where ObjectWillChangePublisher == ObservableObjectPu
                 installedPublisher = alreadyInstalledPublisher
                 // Don't visit other fields, as all @Published fields
                 // already have a publisher installed.
-                return false
+                break
             }
 
             // Okay, this field doesn't have a publisher installed.
@@ -139,7 +141,6 @@ extension ObservableObject where ObjectWillChangePublisher == ObservableObjectPu
             fieldType.installPublisher(lazilyCreatedPublisher, on: storage)
 
             // Continue visiting other fields.
-            return true
         }
 
         return installedPublisher ?? ObservableObjectPublisher()

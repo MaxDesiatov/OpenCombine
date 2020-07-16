@@ -27,12 +27,6 @@ final class CollectTests: XCTestCase {
                                                   { $0.collect() })
     }
 
-    func testtestUpstreamFinishesImmediately() {
-        ReduceTests.testUpstreamFinishesImmediately(expectedSubscription: "Collect",
-                                                    expectedResult: [],
-                                                    { $0.collect() })
-    }
-
     func testCancelAlreadyCancelled() throws {
         try ReduceTests.testCancelAlreadyCancelled { $0.collect() }
     }

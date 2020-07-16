@@ -114,67 +114,6 @@ final class ObservableObjectTests: XCTestCase {
         XCTAssertEqual(observableObject.subclassPublished1, 4)
     }
 
-    func testObjCClassRetroactiveConformance() {
-        let observableObject = NSNumber(value: 42.0)
-        let publisher1 = observableObject.objectWillChange
-        let publisher2 = observableObject.objectWillChange
-        XCTAssert(publisher1 !== publisher2,
-                  """
-                  For instances of Objective-C classes objectWillChange property should \
-                  return a new instance every time
-                  """)
-    }
-
-    func testObjCClassSubclass() {
-        let observableObject = ObjCClassSubclass()
-        let publisher1 = observableObject.objectWillChange
-        let publisher2 = observableObject.objectWillChange
-        XCTAssert(publisher1 === publisher2)
-    }
-
-    func testResilientClassSubclass() {
-        let observableObject = ResilientClassSubclass()
-        let publisher1 = observableObject.objectWillChange
-        let publisher2 = observableObject.objectWillChange
-#if canImport(Darwin)
-        XCTAssert(publisher1 !== publisher2,
-                  """
-                  For subclasses of resilient classes objectWillChange property should \
-                  return a new instance every time
-                  """)
-#else
-        // There are no resilient classes on non-Darwin platforms.
-        XCTAssert(publisher1 === publisher2)
-#endif
-    }
-
-    func testResilientClassSubclass2() {
-        let observableObject = ResilientClassSubclass2()
-        let publisher1 = observableObject.objectWillChange
-        let publisher2 = observableObject.objectWillChange
-#if canImport(Darwin)
-        XCTAssert(publisher1 !== publisher2,
-                  """
-                  For subclasses of resilient classes objectWillChange property should \
-                  return a new instance every time
-                  """)
-#else
-        // There are no resilient classes on non-Darwin platforms.
-        XCTAssert(publisher1 === publisher2)
-#endif
-        }
-
-    func testResilientClassRetroactiveConformance() {
-        let observableObject = JSONEncoder()
-        let publisher1 = observableObject.objectWillChange
-        let publisher2 = observableObject.objectWillChange
-        XCTAssert(publisher1 !== publisher2,
-                  """
-                  For instances of resilient classes objectWillChange property should \
-                  return a new instance every time
-                  """)
-    }
-
     func testGenericClass() {
         let observableObject = GenericClass(123, true)
 
@@ -295,17 +234,6 @@ final class ObservableObjectTests: XCTestCase {
         XCTAssertEqual(counter, 2)
         XCTAssertEqual(observableObject.value1, 43)
     }
-
-    func testClassWithResilientField() {
-        let observableObject = ClassWithResilientField()
-        var counter = 0
-        observableObject.objectWillChange.sink { counter += 1 }.store(in: &disposeBag)
-
-        XCTAssertEqual(counter, 0)
-
-        observableObject.note2 = Notification(name: .init("note 2 modified"))
-        XCTAssertEqual(counter, 1)
-    }
 }
 
 @available(macOS 10.15, iOS 13.0, *)
@@ -339,25 +267,6 @@ private final class ObservedDerivedWithObservedBase: ObservedBase {
 
 @available(macOS 10.15, iOS 13.0, *)
 extension NSNumber: ObservableObject {}
-
-@available(macOS 10.15, iOS 13.0, *)
-private final class ObjCClassSubclass: NSOrderedSet, ObservableObject {
-    @Published var published = 10
-}
-
-@available(macOS 10.15, iOS 13.0, *)
-private class ResilientClassSubclass: JSONDecoder, ObservableObject {
-    @Published var published0 = 10
-    @Published var published1 = "hello!"
-}
-
-@available(macOS 10.15, iOS 13.0, *)
-private final class ResilientClassSubclass2: ResilientClassSubclass {
-    @Published var published3 = true
-}
-
-@available(macOS 10.15, iOS 13.0, *)
-extension JSONEncoder: ObservableObject {}
 
 @available(macOS 10.15, iOS 13.0, *)
 private final class GenericClass<Value1, Value2>: ObservableObject {
@@ -409,11 +318,13 @@ private final class ResilientClassGenericSubclass2<Value1, Value2>
     @Published var value3 = false
 }
 
+#if !os(WASI)
 @available(macOS 10.15, iOS 13.0, *)
 private final class ClassWithResilientField: ObservableObject {
     // Foundation.Notification is resilient struct
     private var note1 = Notification(name: .init("note 1"))
     @Published var note2 = Notification(name: .init("note 2"))
 }
+#endif
 
 #endif // swift(>=5.1)

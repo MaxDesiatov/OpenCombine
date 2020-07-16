@@ -92,27 +92,6 @@ final class EnumerateFieldsTests: TestCase {
 #endif
     }
 
-    func testSwiftSubclassOfObjCClass() {
-        // All Foundation classes are native Swift classes on non-Darwin platforms
-#if canImport(Darwin)
-        var fields = [FieldInfo]()
-        enumerateFields(ofType: ObjCDerived.self,
-                        allowResilientSuperclasses: true) { field in
-            fields.append(field)
-            if field.name == "field2" {
-                return false
-            }
-            return true
-        }
-        XCTAssertEqual(fields, [.init("field1", 8, Int.self),
-                                .init("field2", 16, Bool.self)])
-        if hasFailed { return }
-        let instance = ObjCDerived()
-        XCTAssertEqual(loadField(fields[0], from: instance, as: Int.self), 1)
-        XCTAssertEqual(loadField(fields[1], from: instance, as: Bool.self), true)
-#endif
-    }
-
     func testNSObjectSubclass() {
         var fields = [FieldInfo]()
         enumerateFields(ofType: DerivedFromNSObject.self,
@@ -404,12 +383,6 @@ private class RegularBase {
 private final class RegularDerived: RegularBase {
     var field4 = "3"
     var field5 = 4
-}
-
-private final class ObjCDerived: NSOrderedSet {
-    var field1 = 1
-    var field2 = true
-    let field3 = false
 }
 
 private final class DerivedFromNSObject: NSObject {
