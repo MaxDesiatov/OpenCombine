@@ -15,8 +15,11 @@ let package = Package(
       .package(url: "https://github.com/MaxDesiatov/Runtime.git", .branch("wasi-build")),
     ],
     targets: [
-        .target(name: "COpenCombineHelpers", cxxSettings: [.headerSearchPath(".")]),
-        .target(name: "OpenCombine", dependencies: ["COpenCombineHelpers", "Runtime"]),
+        // .target(name: "COpenCombineHelpers", cxxSettings: [.headerSearchPath(".")]),
+        .target(name: "OpenCombine", dependencies: [
+          // "COpenCombineHelpers", 
+          "Runtime"
+          ]),
         // .target(name: "OpenCombineDispatch", dependencies: ["OpenCombine"]),
         // .target(name: "OpenCombineFoundation", dependencies: ["OpenCombine",
         //                                                       "COpenCombineHelpers"]),
